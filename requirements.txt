@@ -1,8 +1,4 @@
-io
-sys
 logging
 requests
-json
-math
 babel
 python-telegram-bot
