@@ -22,25 +22,6 @@ def tracker():
     tracker.gas_low = gas_result["SafeGasPrice"]
     tracker.gas_avg = gas_result["ProposeGasPrice"]
     tracker.gas_high = gas_result["FastGasPrice"]
-    #PriceUSD
-    peth_url = 'https://api.etherscan.io/api?module=stats&action=ethprice&apikey=PUTYOURETHERSCANAPIKEYHERE'
-    peth_response = session.get(peth_url)
-    peth_data = json.loads(peth_response.text)
-    peth_result = peth_data["result"]
-    pethr = peth_result["ethusd"]
-    tracker.peth = format_currency(pethr, 'USD', locale="en_GB")
-    paxs_url = 'https://api.coingecko.com/api/v3/simple/price?ids=axie-infinity&vs_currencies=usd'
-    paxs_response = session.get(paxs_url)
-    paxs_data = json.loads(paxs_response.text)
-    paxs_result = paxs_data["axie-infinity"]
-    paxsr = paxs_result["usd"]
-    tracker.paxs = format_currency(paxsr, 'USD', locale="en_GB")
-    pslp_url = 'https://api.coingecko.com/api/v3/simple/price?ids=small-love-potion&vs_currencies=usd'
-    pslp_response =  session.get(pslp_url)
-    pslp_data = json.loads(pslp_response.text)
-    pslp_result = pslp_data["small-love-potion"]
-    pslpr = pslp_result["usd"]
-    tracker.pslp = format_currency(pslpr, 'USD', locale="en_GB")
     #GasEsT
     tgas_url1 = 'https://api.etherscan.io/api?module=gastracker&action=gasestimate&gasprice='
     tgas_url2 = '&apikey=PUTYOURETHERSCANAPIKEYHERE'
@@ -62,6 +43,25 @@ def tracker():
     thgas_data = json.loads(thgas_response.text)
     thgas_s = thgas_data["result"]
     tracker.thgas_sec = int(thgas_s)
+    #PriceUSD
+    peth_url = 'https://api.etherscan.io/api?module=stats&action=ethprice&apikey=PUTYOURETHERSCANAPIKEYHERE'
+    peth_response = session.get(peth_url)
+    peth_data = json.loads(peth_response.text)
+    peth_result = peth_data["result"]
+    pethr = peth_result["ethusd"]
+    tracker.peth = format_currency(pethr, 'USD', locale="en_GB")
+    paxs_url = 'https://api.coingecko.com/api/v3/simple/price?ids=axie-infinity&vs_currencies=usd'
+    paxs_response = session.get(paxs_url)
+    paxs_data = json.loads(paxs_response.text)
+    paxs_result = paxs_data["axie-infinity"]
+    paxsr = paxs_result["usd"]
+    tracker.paxs = format_currency(paxsr, 'USD', locale="en_GB")
+    pslp_url = 'https://api.coingecko.com/api/v3/simple/price?ids=small-love-potion&vs_currencies=usd'
+    pslp_response =  session.get(pslp_url)
+    pslp_data = json.loads(pslp_response.text)
+    pslp_result = pslp_data["small-love-potion"]
+    pslpr = pslp_result["usd"]
+    tracker.pslp = format_currency(pslpr, 'USD', locale="en_GB")
     #PriceIDR
     pethid_url = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=idr'
     pethid_response = session.get(pethid_url)
