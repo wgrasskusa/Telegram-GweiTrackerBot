@@ -18,81 +18,68 @@ def tracker():
     gas_response = requests.get(gas_url)
     gas_data = json.loads(gas_response.text)
     gas_result = gas_data["result"]
-    gas_low = gas_result["SafeGasPrice"]
-    gas_avg = gas_result["ProposeGasPrice"]
-    gas_high = gas_result["FastGasPrice"]
+    tracker.gas_low = gas_result["SafeGasPrice"]
+    tracker.gas_avg = gas_result["ProposeGasPrice"]
+    tracker.gas_high = gas_result["FastGasPrice"]
     #PriceUSD
     peth_url = 'https://api.etherscan.io/api?module=stats&action=ethprice&apikey=PUTYOURETHERSCANAPIKEYHERE'
     peth_response = requests.get(peth_url)
     peth_data = json.loads(peth_response.text)
     peth_result = peth_data["result"]
     pethr = peth_result["ethusd"]
-    peth = format_currency(pethr, 'USD', locale="en_GB")
+    tracker.peth = format_currency(pethr, 'USD', locale="en_GB")
     paxs_url = 'https://api.coingecko.com/api/v3/simple/price?ids=axie-infinity&vs_currencies=usd'
     paxs_response = requests.get(paxs_url)
     paxs_data = json.loads(paxs_response.text)
     paxs_result = paxs_data["axie-infinity"]
     paxsr = paxs_result["usd"]
-    paxs = format_currency(paxsr, 'USD', locale="en_GB")
+    tracker.paxs = format_currency(paxsr, 'USD', locale="en_GB")
     pslp_url = 'https://api.coingecko.com/api/v3/simple/price?ids=small-love-potion&vs_currencies=usd'
     pslp_response =  requests.get(pslp_url)
     pslp_data = json.loads(pslp_response.text)
     pslp_result = pslp_data["small-love-potion"]
     pslpr = pslp_result["usd"]
-    pslp = format_currency(pslpr, 'USD', locale="en_GB")
+    tracker.pslp = format_currency(pslpr, 'USD', locale="en_GB")
     #GasEsT
     tgas_url1 = 'https://api.etherscan.io/api?module=gastracker&action=gasestimate&gasprice='
     tgas_url2 = '&apikey=PUTYOURETHERSCANAPIKEYHERE'
-    tlgas_wei = str(gas_low)+'000000000'
+    tlgas_wei = str(tracker.gas_low)+'000000000'
     tlgas_url = tgas_url1 + tlgas_wei + tgas_url2 
     tlgas_response =  requests.get(tlgas_url)
     tlgas_data = json.loads(tlgas_response.text)
     tlgas_s = tlgas_data["result"]
-    tlgas_sec = int(tlgas_s)
-    tagas_wei = str(gas_avg)+'000000000'
+    tracker.tlgas_sec = int(tlgas_s)
+    tagas_wei = str(tracker.gas_avg)+'000000000'
     tagas_url = tgas_url1 + tagas_wei + tgas_url2 
     tagas_response =  requests.get(tagas_url)
     tagas_data = json.loads(tagas_response.text)
     tagas_s = tagas_data["result"]
-    tagas_sec = int(tagas_s)
-    thgas_wei = str(gas_high)+'000000000'
+    tracker.tagas_sec = int(tagas_s)
+    thgas_wei = str(tracker.gas_high)+'000000000'
     thgas_url = tgas_url1 + thgas_wei + tgas_url2 
     thgas_response =  requests.get(thgas_url)
     thgas_data = json.loads(thgas_response.text)
     thgas_s = thgas_data["result"]
-    thgas_sec = int(thgas_s)
+    tracker.thgas_sec = int(thgas_s)
     #PriceIDR
     pethid_url = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=idr'
     pethid_response = requests.get(pethid_url)
     pethid_data = json.loads(pethid_response.text)
     pethid_result = pethid_data["ethereum"]
     pethidr = pethid_result["idr"]
-    pethid = format_currency(pethidr, 'IDR', locale="id_ID")
+    tracker.pethid = format_currency(pethidr, 'IDR', locale="id_ID")
     paxsid_url = 'https://api.coingecko.com/api/v3/simple/price?ids=axie-infinity&vs_currencies=idr'
     paxsid_response = requests.get(paxsid_url)
     paxsid_data = json.loads(paxsid_response.text)
     paxsid_result = paxsid_data["axie-infinity"]
     paxsidr = paxsid_result["idr"]
-    paxsid = format_currency(paxsidr, 'IDR', locale="id_ID")
+    tracker.paxsid = format_currency(paxsidr, 'IDR', locale="id_ID")
     pslpid_url = 'https://api.coingecko.com/api/v3/simple/price?ids=small-love-potion&vs_currencies=idr'
     pslpid_response =  requests.get(pslpid_url)
     pslpid_data = json.loads(pslpid_response.text)
     pslpid_result = pslpid_data["small-love-potion"]
     pslpidr = pslpid_result["idr"]
-    pslpid = format_currency(pslpidr, 'IDR', locale="id_ID")
-    #gcall
-    tracker.gas_low = gas_low
-    tracker.gas_avg = gas_avg
-    tracker.gas_high = gas_high
-    tracker.tlgas_sec = tlgas_sec
-    tracker.tagas_sec = tagas_sec
-    tracker.thgas_sec = thgas_sec
-    tracker.peth = peth
-    tracker.paxs = paxs
-    tracker.pslp = pslp
-    tracker.pethid = pethid
-    tracker.paxsid = paxsid
-    tracker.pslpid = pslpid
+    tracker.pslpid = format_currency(pslpidr, 'IDR', locale="id_ID")
 
 updater.start_polling()
 
