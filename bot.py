@@ -1,19 +1,16 @@
 import sys, io, logging, requests, json, math, time
 from babel.numbers import format_currency
-from telegram import ParseMode
+from telegram import ParseMode, MessageEntity, ChatAction, Update, Bot
+from telegram.error import BadRequest, Unauthorized
+from telegram.ext import CommandHandler, Updater, MessageHandler, Filters
 from telegram.utils.helpers import escape_markdown
-from telegram.ext import MessageHandler, Filters, CommandHandler, Updater
 
-# Replace PUTYOURTELEGRAMBOTTOKENHERE with your telegram bot token
-# Replace PUTYOURETHERSCANAPIKEYHERE with your etherscan.io api key
+BOT_TOKEN = 'YOURTELEGRAMBOTTOKEN'
+ETHER_API = 'YOURETHERSCANAPI'
 
-updater = Updater(token='PUTYOURTELEGRAMBOTTOKENHERE', use_context=True)
-dispatcher = updater.dispatcher
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 session = requests.Session()
-
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',level=logging.INFO)
-
-updater.start_polling()
 
 def start(update, context):
     msg_start = io.StringIO()
@@ -31,13 +28,11 @@ def start(update, context):
         sep="",file=msg_start
         )
     mstart = msg_start.getvalue()
-    context.bot.send_message(chat_id=update.effective_chat.id, text=mstart, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
-start_handler = CommandHandler('start', start)
-dispatcher.add_handler(start_handler)
+    update.message.reply_text(quote=True, text=mstart, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
 
 def gtracker():
     #GasTracker
-    gas_url = 'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=PUTYOURETHERSCANAPIKEYHERE'
+    gas_url = 'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=' + ETHER_API
     time.sleep(0.2)
     gas_response = session.get(gas_url)
     gas_data = json.loads(gas_response.text)
@@ -46,24 +41,21 @@ def gtracker():
     gtracker.gas_avg = gas_result["ProposeGasPrice"]
     gtracker.gas_high = gas_result["FastGasPrice"]
     #GasEsT
-    tgas_url1 = 'https://api.etherscan.io/api?module=gastracker&action=gasestimate&gasprice='
-    tgas_url2 = '&apikey=PUTYOURETHERSCANAPIKEYHERE'
-    tlgas_wei = str(gtracker.gas_low)+'000000000'
-    tlgas_url = tgas_url1 + tlgas_wei + tgas_url2 
+    tgas_url = 'https://api.etherscan.io/api?module=gastracker&action=gasestimate&gasprice='
+    tgas_url2 = '000000000&apikey='
+    tlgas_url = tgas_url + str(gtracker.gas_low) + tgas_url2 + ETHER_API
     time.sleep(0.2)
     tlgas_response =  session.get(tlgas_url)
     tlgas_data = json.loads(tlgas_response.text)
     tlgas_s = tlgas_data["result"]
     gtracker.tlgas_sec = int(tlgas_s)
-    tagas_wei = str(gtracker.gas_avg)+'000000000'
-    tagas_url = tgas_url1 + tagas_wei + tgas_url2 
+    tagas_url = tgas_url + str(gtracker.gas_avg) + tgas_url2 + ETHER_API
     time.sleep(0.2)
     tagas_response =  session.get(tagas_url)
     tagas_data = json.loads(tagas_response.text)
     tagas_s = tagas_data["result"]
     gtracker.tagas_sec = int(tagas_s)
-    thgas_wei = str(gtracker.gas_high)+'000000000'
-    thgas_url = tgas_url1 + thgas_wei + tgas_url2 
+    thgas_url = tgas_url + str(gtracker.gas_high) + tgas_url2 + ETHER_API
     time.sleep(0.2)
     thgas_response =  session.get(thgas_url)
     thgas_data = json.loads(thgas_response.text)
@@ -85,13 +77,11 @@ def gas(update, context):
         sep="",file=msg_gas
         )
     mgas = msg_gas.getvalue()
-    context.bot.send_message(chat_id=update.effective_chat.id, text=mgas, parse_mode=ParseMode.MARKDOWN)
-gas_handler = CommandHandler('gas', gas)
-dispatcher.add_handler(gas_handler)
+    update.message.reply_text(quote=True, text=mgas, parse_mode=ParseMode.MARKDOWN)
 
 def ptracker():
     #PriceUSD
-    peth_url = 'https://api.etherscan.io/api?module=stats&action=ethprice&apikey=PUTYOURETHERSCANAPIKEYHERE'
+    peth_url = 'https://api.etherscan.io/api?module=stats&action=ethprice&apikey=' + ETHER_API
     time.sleep(0.2)
     peth_response = session.get(peth_url)
     peth_data = json.loads(peth_response.text)
@@ -149,6 +139,20 @@ def prices(update, context):
         sep="",file=msg_price
         )
     mprice = msg_price.getvalue()
-    context.bot.send_message(chat_id=update.effective_chat.id, text=mprice, parse_mode=ParseMode.MARKDOWN)
-prices_handler = CommandHandler('prices', prices)
-dispatcher.add_handler(prices_handler)
+    update.message.reply_text(quote=True, text=mprice, parse_mode=ParseMode.MARKDOWN)
+
+def error(context, update):
+    logger.warning('Update "%s" caused error "%s"', context, update.error)
+
+def run():
+    updater = Updater(token=BOT_TOKEN, use_context=True)
+    dispatcher = updater.dispatcher
+
+    dispatcher.add_handler(CommandHandler('start', start))
+    dispatcher.add_handler(CommandHandler('gas', gas))
+    dispatcher.add_handler(CommandHandler('prices', prices))
+    dispatcher.add_error_handler(error)
+
+    updater.start_polling()
+    updater.idle()
+run()
