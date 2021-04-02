@@ -1,17 +1,19 @@
-import sys, io, logging, requests, json, math, time
+import sys, io, logging, json, math, httpx
+from ratelimit import limits, sleep_and_retry
 from babel.numbers import format_currency
 from telegram import ParseMode, MessageEntity, ChatAction, Update, Bot
 from telegram.error import BadRequest, Unauthorized
-from telegram.ext import CommandHandler, Updater, MessageHandler, Filters
+from telegram.ext import CommandHandler, Updater, MessageHandler, Filters, run_async
 from telegram.utils.helpers import escape_markdown
 
-BOT_TOKEN = 'YOURTELEGRAMBOTTOKEN'
-ETHER_API = 'YOURETHERSCANAPI'
+BOT_TOKEN = 'PUTYOURTELEGRAMBOTTOKENHERE'
+ETHER_API = 'PUTYOURETHERSCANAPIKEYHERE'
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
-session = requests.Session()
+client = httpx.Client()
 
+@run_async
 def start(update, context):
     msg_start = io.StringIO()
     print(
@@ -30,11 +32,11 @@ def start(update, context):
     mstart = msg_start.getvalue()
     update.message.reply_text(quote=True, text=mstart, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
 
+@sleep_and_retry
+@limits(calls=5, period=1)
 def gtracker():
-    #GasTracker
     gas_url = 'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=' + ETHER_API
-    time.sleep(0.2)
-    gas_response = session.get(gas_url)
+    gas_response = client.get(gas_url)
     gas_data = json.loads(gas_response.text)
     gas_result = gas_data["result"]
     gtracker.gas_low = gas_result["SafeGasPrice"]
@@ -44,25 +46,23 @@ def gtracker():
     tgas_url = 'https://api.etherscan.io/api?module=gastracker&action=gasestimate&gasprice='
     tgas_url2 = '000000000&apikey='
     tlgas_url = tgas_url + str(gtracker.gas_low) + tgas_url2 + ETHER_API
-    time.sleep(0.2)
-    tlgas_response =  session.get(tlgas_url)
+    tlgas_response = client.get(tlgas_url)
     tlgas_data = json.loads(tlgas_response.text)
     tlgas_s = tlgas_data["result"]
     gtracker.tlgas_sec = int(tlgas_s)
     tagas_url = tgas_url + str(gtracker.gas_avg) + tgas_url2 + ETHER_API
-    time.sleep(0.2)
-    tagas_response =  session.get(tagas_url)
+    tagas_response = client.get(tagas_url)
     tagas_data = json.loads(tagas_response.text)
     tagas_s = tagas_data["result"]
     gtracker.tagas_sec = int(tagas_s)
     thgas_url = tgas_url + str(gtracker.gas_high) + tgas_url2 + ETHER_API
-    time.sleep(0.2)
-    thgas_response =  session.get(thgas_url)
+    thgas_response =  client.get(thgas_url)
     thgas_data = json.loads(thgas_response.text)
     thgas_s = thgas_data["result"]
     gtracker.thgas_sec = int(thgas_s)
 gtracker()
 
+@run_async
 def gas(update, context):
     gtracker()
     msg_gas = io.StringIO()
@@ -79,48 +79,50 @@ def gas(update, context):
     mgas = msg_gas.getvalue()
     update.message.reply_text(quote=True, text=mgas, parse_mode=ParseMode.MARKDOWN)
 
+@sleep_and_retry
+@limits(calls=6, period=1)
 def ptracker():
-    #PriceUSD
-    peth_url = 'https://api.etherscan.io/api?module=stats&action=ethprice&apikey=' + ETHER_API
-    time.sleep(0.2)
-    peth_response = session.get(peth_url)
-    peth_data = json.loads(peth_response.text)
-    peth_result = peth_data["result"]
-    pethr = peth_result["ethusd"]
-    ptracker.peth = format_currency(pethr, 'USD', locale="en_GB")
-    paxs_url = 'https://api.coingecko.com/api/v3/simple/price?ids=axie-infinity&vs_currencies=usd'
-    paxs_response = session.get(paxs_url)
-    paxs_data = json.loads(paxs_response.text)
-    paxs_result = paxs_data["axie-infinity"]
-    paxsr = paxs_result["usd"]
-    ptracker.paxs = format_currency(paxsr, 'USD', locale="en_GB")
-    pslp_url = 'https://api.coingecko.com/api/v3/simple/price?ids=small-love-potion&vs_currencies=usd'
-    pslp_response =  session.get(pslp_url)
-    pslp_data = json.loads(pslp_response.text)
-    pslp_result = pslp_data["small-love-potion"]
-    pslpr = pslp_result["usd"]
-    ptracker.pslp = format_currency(pslpr, 'USD', locale="en_GB")
-    #PriceIDR
-    pethid_url = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=idr'
-    pethid_response = session.get(pethid_url)
-    pethid_data = json.loads(pethid_response.text)
-    pethid_result = pethid_data["ethereum"]
-    pethidr = pethid_result["idr"]
-    ptracker.pethid = format_currency(pethidr, 'IDR', locale="id_ID")
-    paxsid_url = 'https://api.coingecko.com/api/v3/simple/price?ids=axie-infinity&vs_currencies=idr'
-    paxsid_response = session.get(paxsid_url)
-    paxsid_data = json.loads(paxsid_response.text)
-    paxsid_result = paxsid_data["axie-infinity"]
-    paxsidr = paxsid_result["idr"]
-    ptracker.paxsid = format_currency(paxsidr, 'IDR', locale="id_ID")
-    pslpid_url = 'https://api.coingecko.com/api/v3/simple/price?ids=small-love-potion&vs_currencies=idr'
-    pslpid_response =  session.get(pslpid_url)
-    pslpid_data = json.loads(pslpid_response.text)
-    pslpid_result = pslpid_data["small-love-potion"]
-    pslpidr = pslpid_result["idr"]
-    ptracker.pslpid = format_currency(pslpidr, 'IDR', locale="id_ID")
+        #PriceUSD
+        peth_url = 'https://api.etherscan.io/api?module=stats&action=ethprice&apikey=' + ETHER_API
+        peth_response = client.get(peth_url)
+        peth_data = json.loads(peth_response.text)
+        peth_result = peth_data["result"]
+        pethr = peth_result["ethusd"]
+        ptracker.peth = format_currency(pethr, 'USD', locale="en_GB")
+        paxs_url = 'https://api.coingecko.com/api/v3/simple/price?ids=axie-infinity&vs_currencies=usd'
+        paxs_response = client.get(paxs_url)
+        paxs_data = json.loads(paxs_response.text)
+        paxs_result = paxs_data["axie-infinity"]
+        paxsr = paxs_result["usd"]
+        ptracker.paxs = format_currency(paxsr, 'USD', locale="en_GB")
+        pslp_url = 'https://api.coingecko.com/api/v3/simple/price?ids=small-love-potion&vs_currencies=usd'
+        pslp_response =  client.get(pslp_url)
+        pslp_data = json.loads(pslp_response.text)
+        pslp_result = pslp_data["small-love-potion"]
+        pslpr = pslp_result["usd"]
+        ptracker.pslp = format_currency(pslpr, 'USD', locale="en_GB")
+        #PriceIDR
+        pethid_url = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=idr'
+        pethid_response = client.get(pethid_url)
+        pethid_data = json.loads(pethid_response.text)
+        pethid_result = pethid_data["ethereum"]
+        pethidr = pethid_result["idr"]
+        ptracker.pethid = format_currency(pethidr, 'IDR', locale="id_ID")
+        paxsid_url = 'https://api.coingecko.com/api/v3/simple/price?ids=axie-infinity&vs_currencies=idr'
+        paxsid_response = client.get(paxsid_url)
+        paxsid_data = json.loads(paxsid_response.text)
+        paxsid_result = paxsid_data["axie-infinity"]
+        paxsidr = paxsid_result["idr"]
+        ptracker.paxsid = format_currency(paxsidr, 'IDR', locale="id_ID")
+        pslpid_url = 'https://api.coingecko.com/api/v3/simple/price?ids=small-love-potion&vs_currencies=idr'
+        pslpid_response =  client.get(pslpid_url)
+        pslpid_data = json.loads(pslpid_response.text)
+        pslpid_result = pslpid_data["small-love-potion"]
+        pslpidr = pslpid_result["idr"]
+        ptracker.pslpid = format_currency(pslpidr, 'IDR', locale="id_ID")
 ptracker()
 
+@run_async
 def prices(update, context):
     ptracker()
     msg_price = io.StringIO()
@@ -141,6 +143,7 @@ def prices(update, context):
     mprice = msg_price.getvalue()
     update.message.reply_text(quote=True, text=mprice, parse_mode=ParseMode.MARKDOWN)
 
+@run_async
 def error(context, update):
     logger.warning('Update "%s" caused error "%s"', context, update.error)
 
