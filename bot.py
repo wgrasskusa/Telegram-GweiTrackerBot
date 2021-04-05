@@ -1,5 +1,4 @@
-import sys, io, logging, json, math, httpx
-from ratelimit import limits, sleep_and_retry
+import sys, io, logging, json, math, httpx, time
 from babel.numbers import format_currency
 from telegram import ParseMode, MessageEntity, ChatAction, Update, Bot
 from telegram.error import BadRequest, Unauthorized
@@ -32,10 +31,10 @@ def start(update, context):
     mstart = msg_start.getvalue()
     update.message.reply_text(quote=True, text=mstart, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
 
-@sleep_and_retry
-@limits(calls=5, period=1)
+@run_async
 def gtracker():
     gas_url = 'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=' + ETHER_API
+    time.sleep(0.2)
     gas_response = client.get(gas_url)
     gas_data = json.loads(gas_response.text)
     gas_result = gas_data["result"]
@@ -46,16 +45,19 @@ def gtracker():
     tgas_url = 'https://api.etherscan.io/api?module=gastracker&action=gasestimate&gasprice='
     tgas_url2 = '000000000&apikey='
     tlgas_url = tgas_url + str(gtracker.gas_low) + tgas_url2 + ETHER_API
+    time.sleep(0.2)
     tlgas_response = client.get(tlgas_url)
     tlgas_data = json.loads(tlgas_response.text)
     tlgas_s = tlgas_data["result"]
     gtracker.tlgas_sec = int(tlgas_s)
     tagas_url = tgas_url + str(gtracker.gas_avg) + tgas_url2 + ETHER_API
+    time.sleep(0.2)
     tagas_response = client.get(tagas_url)
     tagas_data = json.loads(tagas_response.text)
     tagas_s = tagas_data["result"]
     gtracker.tagas_sec = int(tagas_s)
     thgas_url = tgas_url + str(gtracker.gas_high) + tgas_url2 + ETHER_API
+    time.sleep(0.2)
     thgas_response =  client.get(thgas_url)
     thgas_data = json.loads(thgas_response.text)
     thgas_s = thgas_data["result"]
@@ -79,11 +81,11 @@ def gas(update, context):
     mgas = msg_gas.getvalue()
     update.message.reply_text(quote=True, text=mgas, parse_mode=ParseMode.MARKDOWN)
 
-@sleep_and_retry
-@limits(calls=6, period=1)
+@run_async
 def ptracker():
         #PriceUSD
         peth_url = 'https://api.etherscan.io/api?module=stats&action=ethprice&apikey=' + ETHER_API
+        time.sleep(0.2)
         peth_response = client.get(peth_url)
         peth_data = json.loads(peth_response.text)
         peth_result = peth_data["result"]
