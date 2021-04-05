@@ -31,7 +31,6 @@ def start(update, context):
     mstart = msg_start.getvalue()
     update.message.reply_text(quote=True, text=mstart, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
 
-@run_async
 def gtracker():
     gas_url = 'https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=' + ETHER_API
     time.sleep(0.2)
@@ -81,7 +80,6 @@ def gas(update, context):
     mgas = msg_gas.getvalue()
     update.message.reply_text(quote=True, text=mgas, parse_mode=ParseMode.MARKDOWN)
 
-@run_async
 def ptracker():
         #PriceUSD
         peth_url = 'https://api.etherscan.io/api?module=stats&action=ethprice&apikey=' + ETHER_API
