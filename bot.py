@@ -1,9 +1,7 @@
-import sys, io, logging, json, math, httpx, time
+import io, logging, json, httpx, time
 from babel.numbers import format_currency
-from telegram import ParseMode, MessageEntity, ChatAction, Update, Bot
-from telegram.error import BadRequest, Unauthorized
-from telegram.ext import CommandHandler, Updater, MessageHandler, Filters, run_async
-from telegram.utils.helpers import escape_markdown
+from telegram import ParseMode
+from telegram.ext import CommandHandler, Updater, run_async
 
 BOT_TOKEN = 'PUTYOURTELEGRAMBOTTOKENHERE'
 ETHER_API = 'PUTYOURETHERSCANAPIKEYHERE'
